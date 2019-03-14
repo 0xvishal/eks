@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchdb-pod
+  labels:
+    run: couchdb-pod
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 5984
+    targetPort: 5984
+  selector:
+    run: couchdb-pod
