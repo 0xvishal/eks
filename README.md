@@ -1,3 +1,3 @@
-# Configure EKS with ALB, Inress, Autoscaler, LoadbalancerController 
+# Configure EKS with ALB, Inress, Autoscaler, LoadbalancerController using Terraform
 
 
