@@ -347,15 +347,15 @@ Kubernetes provides a comprehensive approach to storage orchestration, allowing 
 
 1. **Define a StorageClass**:
    ```yaml
-   apiVersion: storage.k8s.io/v1
-   kind: StorageClass
-   metadata:
-     name: fast
-   provisioner: kubernetes.io/aws-ebs
-   parameters:
-     type: io1
-     iopsPerGB: "10"
-     fsType: ext4
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-sc
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp2
+volumeBindingMode: WaitForFirstConsumer
+#volumeBindingMode: Immediate   
    ```
 
 2. **Create a PersistentVolumeClaim**:
