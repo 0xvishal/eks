@@ -363,14 +363,14 @@ Kubernetes provides a comprehensive approach to storage orchestration, allowing 
    apiVersion: v1
    kind: PersistentVolumeClaim
    metadata:
-     name: my-pvc
+     name: ebs-claim
    spec:
      accessModes:
        - ReadWriteOnce
+     storageClassName: ebs-sc
      resources:
        requests:
-         storage: 5Gi
-     storageClassName: fast
+         storage: 1Gi
    ```
 
 3. **Kubernetes Provisions a PV**:
