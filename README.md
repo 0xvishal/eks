@@ -381,18 +381,20 @@ Kubernetes provides a comprehensive approach to storage orchestration, allowing 
    apiVersion: v1
    kind: Pod
    metadata:
-     name: my-pod
+     name: app
    spec:
      containers:
-     - name: my-container
-       image: my-image
+     - name: app
+       image: centos
+       command: ["/bin/sh"]
+       args: ["-c", "while true; do echo $(date -u) >> /data/out.txt; sleep 5; done"]
        volumeMounts:
-       - mountPath: "/data"
-         name: my-storage
+       - name: persistent-storage
+         mountPath: /data
      volumes:
-     - name: my-storage
+     - name: persistent-storage
        persistentVolumeClaim:
-         claimName: my-pvc
+         claimName: ebs-claim
    ```
 
 ### Summary:
