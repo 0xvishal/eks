@@ -399,3 +399,121 @@ Kubernetes provides a comprehensive approach to storage orchestration, allowing 
 
 ### Summary:
 Kubernetes manages storage orchestration by abstracting and automating the provisioning, consumption, and management of storage resources within a cluster. It uses components like Volumes, Persistent Volumes (PVs), Persistent Volume Claims (PVCs), and StorageClasses to provide dynamic and flexible storage options that can meet the diverse needs of applications. The use of the Container Storage Interface (CSI) further extends Kubernetes' storage capabilities, allowing for integration with a wide range of storage solutions. This system allows Kubernetes to handle both traditional and cloud-native storage needs effectively, supporting a wide range of workloads in different environments.
+
+## Kubernetes Health Probes
+In Kubernetes, health probes help monitor the state of applications running within a cluster, enabling the platform to identify and address any issues with containerized applications. These probes are crucial for maintaining application availability and reliability, as they guide Kubernetes in determining when to restart, replace, or scale applications. Kubernetes provides two main types of health probes:
+
+1. **Liveness Probes**: Detect if an application is running and responsive.
+2. **Readiness Probes**: Detect if an application is ready to handle requests.
+
+Each probe has configurable properties that specify how Kubernetes should check the application’s health, including frequency, timeout, and failure thresholds.
+
+Here’s an overview of these probes and how they’re configured:
+
+### 1. **Liveness Probe**
+
+- **Purpose**: The Liveness probe checks if an application inside a container is alive. If this probe fails, Kubernetes restarts the container, assuming it is in a failed state that it can’t recover from on its own.
+- **Use Case**: Ideal for applications that may hang or encounter unexpected issues, requiring a restart to recover. For example, a process may be stuck in a deadlock, or an application may have run out of memory.
+
+- **Configuration Options**:
+  - `initialDelaySeconds`: Time to wait before starting the probe.
+  - `periodSeconds`: Frequency at which the probe should run.
+  - `timeoutSeconds`: How long to wait for a probe response.
+  - `failureThreshold`: Number of consecutive failed probes before the container is considered unhealthy.
+
+- **Example**:
+  ```yaml
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+  ```
+  In this example, Kubernetes checks the `/health` endpoint every 5 seconds after an initial delay of 10 seconds. If the endpoint fails to respond within 3 seconds for several consecutive checks, Kubernetes will restart the container.
+
+### 2. **Readiness Probe**
+
+- **Purpose**: The Readiness probe checks if an application is ready to accept traffic. When this probe fails, Kubernetes removes the Pod from the list of available endpoints for services, effectively stopping traffic from reaching it until it becomes ready again.
+- **Use Case**: Useful for applications that need time to load necessary data, initialize caches, or establish dependencies with external services before becoming ready to handle requests.
+
+- **Configuration Options**:
+  - Similar to the Liveness probe, you can configure `initialDelaySeconds`, `periodSeconds`, `timeoutSeconds`, and `failureThreshold`.
+
+- **Example**:
+  ```yaml
+  readinessProbe:
+    tcpSocket:
+      port: 3306
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 3
+  ```
+  Here, Kubernetes checks if the application is ready to receive traffic on port 3306. If the probe fails, the application won’t receive any traffic until it is ready.
+
+### 3. **Startup Probe**
+
+- **Purpose**: The Startup probe is used to determine if an application has started up successfully. Unlike Liveness and Readiness probes, Startup probes give applications more time to initialize. Once this probe succeeds, Kubernetes stops running it and proceeds with the Liveness and Readiness probes.
+- **Use Case**: Helpful for applications that may take longer to start, such as those with large dependencies or that require extensive initialization.
+
+- **Example**:
+  ```yaml
+  startupProbe:
+    exec:
+      command: ["cat", "/tmp/healthy"]
+    initialDelaySeconds: 0
+    periodSeconds: 5
+    failureThreshold: 30
+  ```
+  Here, Kubernetes will check every 5 seconds if the file `/tmp/healthy` exists. If the probe fails 30 times (indicating a startup failure), Kubernetes will restart the container.
+
+### Probe Types
+
+Each probe can be configured in one of three ways:
+
+1. **HTTP Probe (`httpGet`)**:
+   - Checks if a specific HTTP endpoint is reachable.
+   - Useful for web services and applications exposing an HTTP-based health check.
+
+   ```yaml
+   httpGet:
+     path: /health
+     port: 8080
+   ```
+
+2. **TCP Probe (`tcpSocket`)**:
+   - Checks if a specified TCP port is open on the container.
+   - Ideal for applications without an HTTP health check endpoint but which listen on a specific TCP port.
+
+   ```yaml
+   tcpSocket:
+     port: 3306
+   ```
+
+3. **Exec Probe (`exec`)**:
+   - Executes a command inside the container. If the command returns a success code (0), the probe passes; otherwise, it fails.
+   - Suitable for custom checks or applications that don’t expose HTTP or TCP endpoints.
+
+   ```yaml
+   exec:
+     command: ["cat", "/tmp/healthy"]
+   ```
+
+### Configuring Probes in Practice
+
+When configuring probes, keep in mind the expected behavior of your application, including:
+
+- **Startup Time**: Applications that require time to initialize should use a **Startup Probe** to avoid premature restarts.
+- **Health Check Frequency**: Set `periodSeconds` based on how frequently you want to monitor the application’s health without overloading the application with health checks.
+- **Timeouts**: Ensure that `timeoutSeconds` is reasonable for the probe. Short timeouts may lead to false negatives, while overly long timeouts may delay detection of issues.
+- **Failure Thresholds**: Set appropriate `failureThreshold` values to define how many failures should trigger a response (restart or removal from traffic), based on how resilient the application is.
+
+### Summary
+
+Kubernetes health probes are fundamental in managing application availability and stability, with each type serving a specific purpose:
+- **Liveness Probes** restart applications that encounter failures.
+- **Readiness Probes** manage traffic, ensuring only ready instances receive requests.
+- **Startup Probes** give applications time to initialize before being subjected to Liveness and Readiness checks.
+
+Using the right probes for each application allows Kubernetes to effectively manage workload health, leading to greater application resilience and improved user experience.
